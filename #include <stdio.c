@@ -1,47 +1,66 @@
 #include <stdio.h>
 
 #define TAM_TABULEIRO 10
-#define TAM_NAVIO 3
+#define TAM_NAVIO 4        // navio representado com 4
+#define TAM_HABILIDADE 3   // habilidades compactas
 
-// Função auxiliar para verificar se uma posição está livre
-int posicao_valida(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int linha, int coluna) {
+int dentro_tabuleiro(int linha, int coluna) {
     return (linha >= 0 && linha < TAM_TABULEIRO &&
-            coluna >= 0 && coluna < TAM_TABULEIRO &&
-            tabuleiro[linha][coluna] == 0);
+            coluna >= 0 && coluna < TAM_TABULEIRO);
 }
 
-// Função para posicionar navio horizontal
-void posiciona_horizontal(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int linha, int coluna) {
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (posicao_valida(tabuleiro, linha, coluna + i)) {
-            tabuleiro[linha][coluna + i] = 3;
+// Cone pequeno
+void aplica_cone(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int origem_linha, int origem_coluna) {
+    int padrao[2][3] = {
+        {0,1,0},
+        {1,1,1}
+    };
+    for (int i=0; i<2; i++) {
+        for (int j=0; j<3; j++) {
+            if (padrao[i][j]==1) {
+                int linha = origem_linha + i;
+                int coluna = origem_coluna + j-1;
+                if (dentro_tabuleiro(linha,coluna) && tabuleiro[linha][coluna]==0)
+                    tabuleiro[linha][coluna] = 1;
+            }
         }
     }
 }
 
-// Função para posicionar navio vertical
-void posiciona_vertical(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int linha, int coluna) {
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (posicao_valida(tabuleiro, linha + i, coluna)) {
-            tabuleiro[linha + i][coluna] = 3;
+// Cruz pequena
+void aplica_cruz(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int origem_linha, int origem_coluna) {
+    int padrao[3][3] = {
+        {0,3,0},
+        {3,3,3},
+        {0,3,0}
+    };
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            if (padrao[i][j]==3) {
+                int linha = origem_linha + i-1;
+                int coluna = origem_coluna + j-1;
+                if (dentro_tabuleiro(linha,coluna) && tabuleiro[linha][coluna]==0)
+                    tabuleiro[linha][coluna] = 3;
+            }
         }
     }
 }
 
-// Função para posicionar navio diagonal (↘)
-void posiciona_diagonal_principal(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int linha, int coluna) {
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (posicao_valida(tabuleiro, linha + i, coluna + i)) {
-            tabuleiro[linha + i][coluna + i] = 3;
-        }
-    }
-}
-
-// Função para posicionar navio diagonal (↙)
-void posiciona_diagonal_secundaria(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int linha, int coluna) {
-    for (int i = 0; i < TAM_NAVIO; i++) {
-        if (posicao_valida(tabuleiro, linha + i, coluna - i)) {
-            tabuleiro[linha + i][coluna - i] = 3;
+// Octaedro pequeno
+void aplica_octaedro(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], int origem_linha, int origem_coluna) {
+    int padrao[3][3] = {
+        {0,2,0},
+        {2,2,2},
+        {0,2,0}
+    };
+    for (int i=0; i<3; i++) {
+        for (int j=0; j<3; j++) {
+            if (padrao[i][j]==2) {
+                int linha = origem_linha + i-1;
+                int coluna = origem_coluna + j-1;
+                if (dentro_tabuleiro(linha,coluna) && tabuleiro[linha][coluna]==0)
+                    tabuleiro[linha][coluna] = 2;
+            }
         }
     }
 }
@@ -49,30 +68,29 @@ void posiciona_diagonal_secundaria(int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO], 
 int main() {
     int tabuleiro[TAM_TABULEIRO][TAM_TABULEIRO];
 
-    // Inicializa todas as posições com 0 (água)
-    for (int i = 0; i < TAM_TABULEIRO; i++) {
-        for (int j = 0; j < TAM_TABULEIRO; j++) {
+    // Inicializa tabuleiro
+    for (int i=0; i<TAM_TABULEIRO; i++)
+        for (int j=0; j<TAM_TABULEIRO; j++)
             tabuleiro[i][j] = 0;
-        }
-    }
 
-    // Posiciona os quatro navios
-    posiciona_horizontal(tabuleiro, 1, 2);   // Linha 2, coluna C
-    posiciona_vertical(tabuleiro, 4, 6);     // Linha 5, coluna G
-    posiciona_diagonal_principal(tabuleiro, 0, 0); // Diagonal principal a partir de (1,1)
-    posiciona_diagonal_secundaria(tabuleiro, 2, 8); // Diagonal secundária a partir de (3,J)
+    // Exemplo: navio
+    tabuleiro[1][2] = TAM_NAVIO;
+    tabuleiro[1][3] = TAM_NAVIO;
+    tabuleiro[1][4] = TAM_NAVIO;
 
-    // Exibe cabeçalho das colunas (A–J)
+    // Aplica habilidades
+    aplica_cone(tabuleiro, 5, 5);     // Cone → 1
+    aplica_cruz(tabuleiro, 2, 2);     // Cruz → 3
+    aplica_octaedro(tabuleiro, 7, 7); // Octaedro → 2
+
+    // Exibe tabuleiro
     printf("    ");
-    for (int j = 0; j < TAM_TABULEIRO; j++) {
-        printf(" %c ", 'A' + j);
-    }
+    for (int j=0; j<TAM_TABULEIRO; j++) printf(" %d ", j);
     printf("\n");
 
-    // Exibe o tabuleiro com linhas numeradas (1–10)
-    for (int i = 0; i < TAM_TABULEIRO; i++) {
-        printf("%2d |", i + 1); // número da linha
-        for (int j = 0; j < TAM_TABULEIRO; j++) {
+    for (int i=0; i<TAM_TABULEIRO; i++) {
+        printf("%2d |", i);
+        for (int j=0; j<TAM_TABULEIRO; j++) {
             printf(" %d ", tabuleiro[i][j]);
         }
         printf("\n");
